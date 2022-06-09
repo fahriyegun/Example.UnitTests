@@ -1,0 +1,134 @@
+﻿XUit projesi oluştururken default XUnit Core oluşturulur. Fakat XUnit .NET Framework 4.5 ve sonrasını desteklediği için 
+ayarlardan .Net framework testleri yapacak şekilde configure edilebilir. bunun için;
+* test projesine sağ tıklanır, edit project seçilir. 
+* karşımıza çıkan csproj içindeki targetframework editlenir ve kaydedilir:
+  <TargetFramework>net4.6</TargetFramework>
+* artık tüm dependeciesdeki  sarı ünlemler kalkar.
+
+
+* dependecies -> nuget altında bulunan referanslar:
+- xunit : xunit metotlarını kullanmamızı sağlar.
+- xunit.runner.visualstudio : testexplorerda yazdığın testlerin görünmesini sağlar.
+- Microsoft.Net.test.sdk  : .NET'te test yazmayı sağlayan software deveploment kits 
+ 
+ * test metotu isimlendirme standardı:
+ //[MethodName_StateUnderTest_ExpectedBehavior]
+ //addApplication_emptyModel_throwsExpection
+
+ * Test metotları AAA prensibi uygular.
+ - Arrange : değişkenler, classlar, objeler tanımlanır.
+ - Act : test edilecek metot tetiklenir ve çıktısı alınır.
+ - Assert : test edilecek metot ile beklenen değer kıyaslanır.
+
+
+ * XUnit Assert Metotları
+//Contains  -- DoesNotContain
+//Assert.Contains("fatma", "fahriye"); //fail
+//Assert.DoesNotContain("fatma", "fahriye"); //success
+//var names = new List<string> { "fatma", "fahriye" }; 
+//Assert.Contains(names, x => x == "ayşe"); //fail
+
+//True - False
+//Assert.True(5 > 2); //success
+//Assert.True(5 < 2); // fail
+//Assert.False(5 < 2); //success
+//Assert.True("kalem".GetType() == typeof(string)); // success
+//Assert.True("kalem".GetType() == typeof(int)); // fail
+
+//Matches -DoesNotMatch
+//var regex = "^dog"; //dog ile başlayan regex rule
+//Assert.Matches(regex, "dog tommy"); //success
+//Assert.Matches(regex, "tommy dog"); //fail 
+//Assert.DoesNotMatch(regex, "tommy dog"); //success 
+
+//StartsWith - EndsWith
+//Assert.StartsWith("bir", "bir gün"); //success
+//Assert.EndsWith("masal", "bir masal"); //success
+
+//Empty - NotEmpty
+//Assert.Empty(new List<string>()); // success
+//Assert.NotEmpty(new List<string> { "deneme" }); //success
+
+//InRange - NotInRange
+//Assert.InRange(10, 2, 20); //success
+//Assert.NotInRange(1, 2, 20); //success
+
+//Single
+//Assert.Single(new List<string> { "fahriye" }); // success
+//Assert.Single(new List<string> { "fahriye", "gün" }); // fail
+//Assert.Single<int>(new List<int> { 1, 2, 3 }); //fail
+
+//IsType - IsNotType
+//Assert.IsType<string>("asdg"); // success
+//Assert.IsType<int>("sfdsf"); //fail
+//Assert.IsNotType<int>("sfdsf"); //success
+
+//IsAssignableFrom
+//Assert.IsAssignableFrom<IEnumerable<string>>(new List<string>()); // success
+//Assert.IsAssignableFrom<object>("fatma"); // success
+////beklenen classın generic classtan miras alıp almadığını, bir objenin beklenen objeden türeyip türeyemediğini anlamak için kullanılır.
+
+//Null - NotNull
+//Assert.Null(null); //success
+//Assert.NotNull("asdas"); //success
+
+//Equal - NotEqual
+//Assert.Equal(4, Add(2, 2));
+//Assert.Equal<int>(4,4);
+
+//throws
+// Exception ex = Assert.Throws<Exception>(()=> testClass.multiple(a, b));
+
+* XUnit Etiketleri:
+- [Fact] // test metodu parametre almıyorsa [Fact] kullanılır.
+
+[Fact]
+public void Test1()
+{           
+    Assert.Equal(4, 2+2);
+
+}
+
+- [Theory] //parametre alan test metotlarında kullanılır.
+- [InlineData(1, 2, 3)] alınacak parametreleri metoda geçirir.
+
+[Theory] 
+[InlineData(1, 2, 3)] // success
+[InlineData(3, 2, 6)] //fail
+public void Test2(int a, int b, int total)
+{
+    Assert.Equal(total, a + b);
+}
+
+ * mocklama için aşağıdaki 2 prensipten biri olmalı. tightly couple code içinde unit test yazılamaz.    
+ - Dependency Injection (DI) //constructor için interfaceler geçmesi. bir design patterndir.
+ - Absraction 
+
+ * moq framework
+ - test dll'ine sağ tıklayıp Manage Nuget Package dediğimizde Moq kütüphanesini test dll imize indiririz.
+
+DI
+
+Interface oluşturulur. ICalculator
+içine hangi metotlar eklenecekse eklenir.
+
+Service'i oluşturulur. SCalculator ICalculator'dan miras alacak. metotları çekecek
+
+bir ana class ouşturulur. Calculator burada constructorda ICalculator geçilir.
+
+test classında var myMock = new Mock<ICalculator>(); diyerek bu interface in taklit edileceğini anlarız.
+var calculator = new Calculator(myMock.Object); diyerek oluşacak calculator nesnesinin taklit edilen interfacele çalışacağını belirtiriz.
+
+
+ * moq framework metotları:
+ Verify()   => myMock.Verify(x=> x.add(a,b), Times.Once);  						 	  : add metotunun bir kere çalışıp çalışmadığını doğrular.
+ Throws()   => myMock.Setup(x=> x.multiply(a,b)).Throws(new Exception("a 0 olamaz")); : hata fırlatmayı sağlar.
+ Callback() => myMock.Setup(x=> x.multiply(It.IsAny<int>(), It.IsAny<int>()))
+			   .Callback<int,int>((a,b) => actualValue = a*b); 						  :bir metot üzerinden callback çalıştırmayı sağlar. yani metodun simulasyonunu sağlar.
+
+
+ * DI sağlamak için Castle.Windsor manage nuget packages tan indirilir. IoC Container Class oluşturulur.
+
+
+ * XUnit ve diğer unit test frameworklerine ait attributes ve assert metotları
+ https://xunit.net/docs/comparisons
